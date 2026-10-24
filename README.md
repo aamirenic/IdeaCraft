@@ -2,10 +2,11 @@
 
 **A local-first workspace for notes, docs, projects and knowledge.**
 
-IdeaCraft is a fast, offline-friendly, desktop app for Windows. Pages live in a
-local SQLite database, the interface is plain HTML/CSS/JS rendered by the system WebView2,
-and the app itself is a compact Rust binary — your words never leave your machine unless
-you turn on sync.
+IdeaCraft is a fast, offline-friendly, desktop app for Windows — and the same source
+tree compiles on Linux and macOS ([Build from source](#build-from-source)).
+Pages live in a local SQLite database, the interface is plain HTML/CSS/JS rendered by
+the system WebView2 (WebKitGTK/WebKit on Linux/macOS), and the app itself is a compact
+Rust binary — your words never leave your machine unless you turn on sync.
 
 - ~7 MB install, starts in under a second, no background services
 - Block editor (headings, lists, to-dos, quotes, code, dividers), Markdown shortcuts
@@ -13,6 +14,19 @@ you turn on sync.
 - Search, templates, data export/backup, device-to-device sync folder
 - Optional AI assistant via a local Ollama endpoint (off by default)
 - Dark/light/system themes
+
+## Screenshots
+
+One page, three views of the app — the editor in both themes, and the `Ctrl K`
+search palette over it:
+
+<p align="center">
+  <img src="docs/screenshot-editor-light.png" width="47%" alt="IdeaCraft in light mode: sidebar with Search (Ctrl K), Favorites and pages, and an editor with a heading, to-dos, a paragraph and bullets." />
+  <img src="docs/screenshot-editor-dark.png" width="47%" alt="IdeaCraft in dark mode: the same page with to-dos and bullets." />
+</p>
+<p align="center">
+  <img src="docs/screenshot-search-palette.png" width="68%" alt="The Ctrl K search palette: searching for &lsquo;ideas&rsquo; highlights matching pages." />
+</p>
 
 ## Install on a PC
 
@@ -64,6 +78,13 @@ manually if you prefer not to use npm.
 
 ## Build from source
 
+IdeaCraft is a [Tauri 2](https://tauri.app) app — a compact Rust binary around the plain
+HTML/CSS/JS frontend in `ui/` (embedded at build time; there is no separate frontend
+build step). Prebuilt releases ship for Windows, but the source builds on all three
+major desktop platforms.
+
+### Windows
+
 Prerequisites: [Rust](https://rustup.rs) 1.80+ and Node.js 18+.
 
 ```bash
@@ -78,10 +99,66 @@ Artifacts land in:
 - `src-tauri/target/release/bundle/nsis/IdeaCraft_<version>_x64-setup.exe` (installer)
 - `src-tauri/target/release/ideacraft.exe` (portable exe)
 
-There is no separate frontend build step — `ui/` is plain modules embedded at build time.
+### Linux
 
-During development, serve `ui/` on the dev port and run the app in debug mode (loads the
-live site, hot-reloads on F5):
+Same Rust/Node prerequisites, plus the system libraries Tauri needs (WebKitGTK, tray,
+rsvg). First-time setup:
+
+```bash
+# Debian / Ubuntu
+sudo apt update
+sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+  libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
+# Fedora
+sudo dnf install -y webkit2gtk4.1-devel gtk3-devel libappindicator-gtk3-devel \
+  librsvg2-devel xdotool-devel openssl-devel
+
+# Arch
+sudo pacman -S --needed webkit2gtk-4.1 gtk3 libappindicator-gtk3 librsvg \
+  xdotool openssl base-devel
+```
+
+Then build the Linux bundles (the configured bundle target is NSIS, which is
+Windows-only — on Linux always pass `--bundles`):
+
+```bash
+npm install
+npm run build -- --bundles deb,appimage
+```
+
+Artifacts land in:
+
+- `src-tauri/target/release/ideacraft` (portable Linux binary)
+- `src-tauri/target/release/bundle/deb/IdeaCraft_<version>_amd64.deb`
+- `src-tauri/target/release/bundle/appimage/IdeaCraft_<version>_amd64.AppImage`
+
+### macOS
+
+Prerequisites: [Rust](https://rustup.rs) 1.80+, Node.js 18+ and the Xcode Command Line
+Tools (`xcode-select --install`).
+
+```bash
+npm install
+npm run build -- --bundles app     # .app you can drag into /Applications
+# or, to also get a disk-image installer:
+# npm run build -- --bundles dmg
+```
+
+Artifacts land in:
+
+- `src-tauri/target/release/bundle/macos/IdeaCraft.app`
+- `src-tauri/target/release/bundle/dmg/IdeaCraft_<version>_<arch>.dmg` (`aarch64` on
+  Apple Silicon, `x86_64` on Intel)
+
+> One shared note: the auto-update feed signs **Windows** installers only, so self-built
+> Linux/macOS binaries just don't receive update prompts — nothing in the app depends
+> on them.
+
+### Development loop (any OS)
+
+Serve `ui/` on the dev port and run the app in debug mode (loads the live site,
+hot-reloads on F5):
 
 ```bash
 npx http-server ui -p 8123            # from repo root, or any static server
@@ -177,7 +254,10 @@ phones home: the app talks only to its configured sync/AI endpoints when you ena
 
 ## Known limitations
 
-- **Windows-only** for now (WebView2). macOS/Linux ports need a bundler config — PRs welcome.
+- **Prebuilt installers ship for Windows** only. The codebase is cross-platform and
+  Linux/macOS builds work from source today (see [Build from source](#build-from-source));
+  packaged installers and update artifacts for those platforms still need bundler
+  tooling — PRs welcome.
 - **Not code-signed** with a paid certificate, so the portable exe can provoke a first-run
   SmartScreen warning (see note above). The updater path verifies artifacts with minisign
   instead.
