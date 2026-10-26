@@ -1686,7 +1686,7 @@ pub fn ai_status(state: State<Db>) -> CmdResult<Value> {
     let (enabled, base, model) = {
         let conn = state.0.lock().map_err(|e| e.to_string())?;
         (
-            get_setting(&conn, "aiEnabled").and_then(|v| v.as_bool()).unwrap_or(true),
+            get_setting(&conn, "aiEnabled").and_then(|v| v.as_bool()).unwrap_or(false),
             get_setting(&conn, "aiBaseUrl")
                 .and_then(|v| v.as_str().map(|s| s.to_string()))
                 .unwrap_or_else(|| "http://127.0.0.1:11434".into()),
@@ -1718,6 +1718,8 @@ pub fn ai_status(state: State<Db>) -> CmdResult<Value> {
     }
 }
 
+const AI_SYSTEM_PROMPT: &str = include_str!("ai_prompt.md");
+
 #[derive(Deserialize)]
 pub struct AiMessage {
     pub role: String,
@@ -1745,7 +1747,7 @@ pub async fn ai_complete(
     let url = format!("{}/api/chat", base.trim_end_matches('/'));
     let mut msgs: Vec<Value> = vec![json!({
         "role": "system",
-        "content": "You are IdeaCraft AI, a concise writing and thinking assistant inside a local notes app. Help the user with their notes. Use Markdown sparingly. Never invent facts about the user's files."
+        "content": AI_SYSTEM_PROMPT
     })];
     if let Some(ctx) = context.filter(|c| !c.trim().is_empty()) {
         msgs.push(json!({

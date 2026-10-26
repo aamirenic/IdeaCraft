@@ -28,7 +28,7 @@ const DEFAULT_SETTINGS = {
   userName: 'You',
   userEmail: '',
   userAvatar: '',
-  aiEnabled: true,
+  aiEnabled: false,
   aiBaseUrl: 'http://127.0.0.1:11434',
   aiModel: 'llama3.2',
   syncFolder: '',

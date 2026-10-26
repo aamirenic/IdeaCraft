@@ -852,7 +852,7 @@ pub fn seed_if_empty(conn: &mut Connection) -> Result<(), String> {
         ("userName", json!("You")),
         ("userEmail", json!("")),
         ("userAvatar", json!("")),
-        ("aiEnabled", json!(true)),
+        ("aiEnabled", json!(false)),
         ("aiBaseUrl", json!("http://127.0.0.1:11434")),
         ("aiModel", json!("llama3.2")),
         ("syncFolder", json!("")),
